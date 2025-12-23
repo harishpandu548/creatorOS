@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// user 
+model User{
+  id String @id @default(cuid())
+  name String?
+  email String @unique
+  image String?
+  createdAt DateTime @default(now())
+
+  memberships Membership[]
+  payments Payment[]
+  usageLogs UsageLog[]
+  subscriptions Subscription[]
+}
+
+//creator 
+model Creator{
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  status CreatorStatus @default(PENDING)
+  commissionRate Int @default(20)
+  createdAt DateTime @default(now())
+
+  ownerUserId String
+  owner User @relation(fields: [ownerUserId],references: [id])
+
+  memberships Membership[]
+  subscriptions Subscription[]
+  tools Tool[]
+  usageLogs UsageLog[]
+  payments Payment[]
+}
+
+//membership
+model Membership{
+  id String @id @default(cuid())
+  role MemberRole
+  createdAt DateTime @default(now())
+
+  userId String
+  creatorId String
+
+  user User @relation(fields: [userId],references: [id])
+  creator Creator @relation(fields: [creatorId],references: [id])
+}
+
+//subscription
+model Subscription{
+  id String @id @default(cuid())
+  planName String
+  status SubscriptionStatus @default(ACTIVE)
+  usageLimit Int
+  startDate DateTime @default(now())
+  endDate DateTime?
+  createdAt DateTime @default(now())
+
+  userId String
+  creatorId String
+
+  user User @relation(fields: [userId],references: [id])
+  creator Creator @relation(fields: [creatorId],references: [id])
+
+  usageLogs UsageLog[]
+}
+
+//tool
+model Tool{
+  id String @id @default(cuid())
+  name String
+  description String?
+  type ToolType
+  monthlyLimit Int
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  creatorId String
+  creator Creator @relation(fields: [creatorId],references: [id])
+
+  usageLogs UsageLog[]
+}
+
+// usage logs
+model UsageLog{
+  id String @id @default(cuid())
+  usedAt DateTime @default(now())
+  count Int @default(1)
+
+  userId String
+  creatorId String
+  toolId String
+  subscriptionId String
+
+  user User @relation(fields: [userId],references: [id])
+  creator Creator @relation(fields: [creatorId],references: [id])
+  tool Tool @relation(fields: [toolId],references: [id])
+  subscription Subscription @relation(fields: [subscriptionId],references: [id])
+}
+
+//payment
+model Payment{
+  id String @id @default(cuid())
+  amount Int
+  platformFee Int
+  creatorEarning Int
+  providerPaymentId String
+  status PaymentStatus
+  createdAt DateTime @default(now())
+
+  userId String
+  creatorId String
+
+  user User @relation(fields: [userId],references: [id])
+  creator Creator @relation(fields: [userId],references: [id])
+}
+
+//member role
+enum MemberRole{
+  CREATOR_ADMIN
+  CREATOR_STAFF
+  SUBSCRIBER
+}
+
+//creator status
+enum CreatorStatus{
+  PENDING
+  APPROVED 
+  BANNED
+}
+
+// subscription status
+enum SubscriptionStatus{
+  ACTIVE 
+  CANCELLED
+  EXPIRED
+}
+
+//tool type
+enum ToolType{
+  AI
+  NON_AI
+}
+
+//payment status
+enum PaymentStatus{
+  PENDING
+  SUCCESS
+  FAILED
+}
