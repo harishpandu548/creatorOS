@@ -9,6 +9,12 @@ export function getIO(server:any){
                 origin:"*",
             }
         })
+        io.on("connection",(socket)=>{
+            console.log("Socket connected:",socket.id)
+            socket.on("join",(room)=>{
+                socket.join(room)
+            })
+        })
     }
     return io;
 }

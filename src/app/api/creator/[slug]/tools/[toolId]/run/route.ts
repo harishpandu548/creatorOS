@@ -1,4 +1,5 @@
 import { getCreatorContext } from "@/lib/creator-context";
+import { getIO } from "@/lib/socket";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:string};}) {
@@ -52,16 +53,23 @@ export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:
                 count:1
             }
         })
+       
         //calculate updated usage
         const updatedUsed=usageCount+1
         const remaining=tool.monthlyLimit-updatedUsed
+
+        //socket event emitting
+        const io=getIO((req as any).socket.server)
+        io.emit("usage:update",{
+            toolId:tool.id,
+            used:updatedUsed,
+            remaining
+        })
 
         //execute tool
         return NextResponse.json({
             message:"Tool Executed Successfully",
             success:true,
-            used:updatedUsed,
-            remaining
         })
     }
     catch(error:any){
