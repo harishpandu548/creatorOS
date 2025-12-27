@@ -13,7 +13,6 @@ const initialState:CreatorState={
     status:null,
 }
 
-
 const creatorSlice=createSlice({
     name:"creator",
     initialState,

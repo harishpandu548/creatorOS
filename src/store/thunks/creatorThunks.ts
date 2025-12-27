@@ -28,6 +28,7 @@ export const loadCreatorContext=createAsyncThunk(
                     usageLimit:subscription.usageLimit
                 }))
             }
+            return true;
         }
         catch(err:any){
             return rejectWithValue("Failed to load creator context")

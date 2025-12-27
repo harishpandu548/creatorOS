@@ -1,6 +1,5 @@
 import { getCurrentUser } from "./auth";
 
-
 export async function getCreatorContext(creatorSlug:string) {
     const user=await getCurrentUser()
 

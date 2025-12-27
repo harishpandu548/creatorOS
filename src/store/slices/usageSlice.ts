@@ -23,7 +23,7 @@ const usageSlice=createSlice({
             state.tools[toolId]={toolId,used,remaining};
 
         },
-        //when a tool is runed increase its usage count to 1 and remaining count to -1
+        //when a tool is runned increase its usage count to 1 and remaining count to -1
         incrementUsage(state,action){
             const {toolId}=action.payload;
             if(state.tools[toolId]){

@@ -1,13 +1,11 @@
 import { getCreatorContext } from "@/lib/creator-context";
-import { error } from "console";
 import { NextRequest, NextResponse } from "next/server";
-
 
 export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:string};}) {
     try{
-        const {user,creator}=await getCreatorContext(params.slug) //till here user and creator exists and user belongs to this creator
+        const {user,creator}=await getCreatorContext(params.slug) // here user and creator we get and this tells user belongs to this creator
         //check active subscription
-        const subscription=await Prisma.subscription.findFirst({
+        const subscription=await prisma.subscription.findFirst({
             where:{
                 userId:user.id,
                 creatorId:creator.id,
@@ -20,7 +18,7 @@ export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:
             },{status:403})
         }
         //check tools ownership
-        const tool=await Prisma.tool.findFirst({
+        const tool=await prisma.tool.findFirst({
             where:{
                 id:params.toolId,
                 creatorId:creator.id,
@@ -32,7 +30,7 @@ export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:
         }
 
         //count usage for this subscription + tool
-        const usageCount=await Prisma.usageLog.count({
+        const usageCount=await prisma.usageLog.count({
             where:{
                 userId:user.id,
                 subscriptionId:subscription.id,
@@ -45,7 +43,7 @@ export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:
             },{status:429})
         }
         //log usage
-        await Prisma.usageLog.create({
+        await prisma.usageLog.create({
             data:{
                 userId:user.id,
                 creatorId:creator.id,
@@ -54,13 +52,19 @@ export async function POST(req:NextRequest,{params}:{params:{slug:string;toolId:
                 count:1
             }
         })
-        //execute tool
-        const result={
-            message:"Tool Executed Successfully"
-        }
-        return NextResponse.json(result)
-    }
-    catch{
+        //calculate updated usage
+        const updatedUsed=usageCount+1
+        const remaining=tool.monthlyLimit-updatedUsed
 
+        //execute tool
+        return NextResponse.json({
+            message:"Tool Executed Successfully",
+            success:true,
+            used:updatedUsed,
+            remaining
+        })
+    }
+    catch(error:any){
+        return NextResponse.json({error:error.message||"Internal Server Error"},{status:500})
     }
 }
